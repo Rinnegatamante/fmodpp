@@ -1028,7 +1028,7 @@ FMOD_RESULT F_API FMOD::ChannelControl::getLowPassGain		 (float *gain) { return 
 FMOD_RESULT F_API FMOD::ChannelControl::setMode				(FMOD_MODE mode) { return FMOD_Channel_SetMode((FMOD_CHANNEL *)this, mode); }
 FMOD_RESULT F_API FMOD::ChannelControl::getMode				(FMOD_MODE *mode) { return FMOD_Channel_GetMode((FMOD_CHANNEL *)this, mode); }
 FMOD_RESULT F_API FMOD::ChannelControl::setCallback			(FMOD_CHANNELCONTROL_CALLBACK callback) { return FMOD_Channel_SetCallback((FMOD_CHANNEL *)this, callback); }
-FMOD_RESULT F_API FMOD::ChannelControl::isPlaying			  (bool *isplaying) { return FMOD_Channel_IsPlaying((FMOD_CHANNEL *)this, (FMOD_BOOL *)isplaying); }
+FMOD_RESULT F_API FMOD::ChannelControl::isPlaying			  (bool *isplaying) { int r; FMOD_RESULT res = FMOD_Channel_IsPlaying((FMOD_CHANNEL *)this, (FMOD_BOOL *)&r); *(uint8_t *)isplaying = r; return res; }
 FMOD_RESULT F_API FMOD::ChannelControl::setPan				 (float pan) { return FMOD_Channel_SetPan_sfp((FMOD_CHANNEL *)this, pan); }
 FMOD_RESULT F_API FMOD::ChannelControl::setMixLevelsOutput	 (float frontleft, float frontright, float center, float lfe, float surroundleft, float surroundright, float backleft, float backright) { return FMOD_Channel_SetMixLevelsOutput_sfp((FMOD_CHANNEL *)this, frontleft, frontright, center, lfe, surroundleft, surroundright, backleft, backright); }
 FMOD_RESULT F_API FMOD::ChannelControl::setMixLevelsInput	  (float *levels, int numlevels) { return FMOD_Channel_SetMixLevelsInput((FMOD_CHANNEL *)this, levels, numlevels); }
