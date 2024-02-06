@@ -5,6 +5,8 @@
 #include "fmod.h"
 #include <vitasdk.h>
 
+#define set_if_non_null(a, b) if (a) *(uint8_t *)a = b
+
 namespace FMOD
 {
 	class System;
@@ -697,8 +699,6 @@ __attribute__((naked)) FMOD_RESULT F_API FMOD_Channel_SetPan_sfp(FMOD_CHANNEL *c
 				 );
 }
 
-// AAAAA
-
 __attribute__((naked)) FMOD_RESULT F_API FMOD_Channel_SetMixLevelsOutput_sfp(FMOD_CHANNEL *channel, float a1, float a2, float a3, float a4, float a5, float a6, float a7, float a8) {
 	asm volatile(
 				 // skip r0 : argument `channel` is not of type float
@@ -910,7 +910,7 @@ FMOD_RESULT F_API FMOD::System::init					(int maxchannels, FMOD_INITFLAGS flags,
 FMOD_RESULT F_API FMOD::System::close				   () { return FMOD_System_Close((FMOD_SYSTEM *)this); }
 FMOD_RESULT F_API FMOD::System::update				  () { return FMOD_System_Update((FMOD_SYSTEM *)this); }
 FMOD_RESULT F_API FMOD::System::setSpeakerPosition	  (FMOD_SPEAKER speaker, float x, float y, bool active) { return FMOD_System_SetSpeakerPosition_sfp((FMOD_SYSTEM *)this, speaker, x, y, active); }
-FMOD_RESULT F_API FMOD::System::getSpeakerPosition	  (FMOD_SPEAKER speaker, float *x, float *y, bool *active) { return FMOD_System_GetSpeakerPosition((FMOD_SYSTEM *)this, speaker, x, y, (FMOD_BOOL *)active); }
+FMOD_RESULT F_API FMOD::System::getSpeakerPosition	  (FMOD_SPEAKER speaker, float *x, float *y, bool *active) { int r; FMOD_RESULT res = FMOD_System_GetSpeakerPosition((FMOD_SYSTEM *)this, speaker, x, y, (FMOD_BOOL *)&r); *(uint8_t *)active = r; return res; }
 FMOD_RESULT F_API FMOD::System::setStreamBufferSize	 (unsigned int filebuffersize, FMOD_TIMEUNIT filebuffersizetype) { return FMOD_System_SetStreamBufferSize((FMOD_SYSTEM *)this, filebuffersize, filebuffersizetype); }
 FMOD_RESULT F_API FMOD::System::getStreamBufferSize	 (unsigned int *filebuffersize, FMOD_TIMEUNIT *filebuffersizetype) { return FMOD_System_GetStreamBufferSize((FMOD_SYSTEM *)this, filebuffersize, filebuffersizetype); }
 FMOD_RESULT F_API FMOD::System::set3DSettings		   (float dopplerscale, float distancefactor, float rolloffscale) { return FMOD_System_Set3DSettings_sfp((FMOD_SYSTEM *)this, dopplerscale, distancefactor, rolloffscale); }
@@ -953,7 +953,7 @@ FMOD_RESULT F_API FMOD::System::getRecordDriverInfo	 (int id, char *name, int na
 FMOD_RESULT F_API FMOD::System::getRecordPosition	   (int id, unsigned int *position) { return FMOD_System_GetRecordPosition((FMOD_SYSTEM *)this, id, position); }
 FMOD_RESULT F_API FMOD::System::recordStart			 (int id, Sound *sound, bool loop) { return FMOD_System_RecordStart((FMOD_SYSTEM *)this, id, (FMOD_SOUND *)sound, loop); }
 FMOD_RESULT F_API FMOD::System::recordStop			  (int id) { return FMOD_System_RecordStop((FMOD_SYSTEM *)this, id); }
-FMOD_RESULT F_API FMOD::System::isRecording			 (int id, bool *recording) { return FMOD_System_IsRecording((FMOD_SYSTEM *)this, id, (FMOD_BOOL *)recording); }
+FMOD_RESULT F_API FMOD::System::isRecording			 (int id, bool *recording) { int r; FMOD_RESULT res = FMOD_System_IsRecording((FMOD_SYSTEM *)this, id, (FMOD_BOOL *)&r); *(uint8_t *)recording = r; return res; }
 FMOD_RESULT F_API FMOD::System::createGeometry		  (int maxpolygons, int maxvertices, Geometry **geometry) { return FMOD_System_CreateGeometry((FMOD_SYSTEM *)this, maxpolygons, maxvertices, (FMOD_GEOMETRY **)geometry); }
 FMOD_RESULT F_API FMOD::System::setGeometrySettings	 (float maxworldsize) { return FMOD_System_SetGeometrySettings_sfp((FMOD_SYSTEM *)this, maxworldsize); }
 FMOD_RESULT F_API FMOD::System::getGeometrySettings	 (float *maxworldsize) { return FMOD_System_GetGeometrySettings((FMOD_SYSTEM *)this, maxworldsize); }
@@ -985,7 +985,7 @@ FMOD_RESULT F_API FMOD::Sound::getFormat			  (FMOD_SOUND_TYPE *type, FMOD_SOUND_
 FMOD_RESULT F_API FMOD::Sound::getNumSubSounds		(int *numsubsounds) { return FMOD_Sound_GetNumSubSounds((FMOD_SOUND *)this, numsubsounds); }
 FMOD_RESULT F_API FMOD::Sound::getNumTags			 (int *numtags, int *numtagsupdated) { return FMOD_Sound_GetNumTags((FMOD_SOUND *)this, numtags, numtagsupdated); }
 FMOD_RESULT F_API FMOD::Sound::getTag				 (const char *name, int index, FMOD_TAG *tag) { return FMOD_Sound_GetTag((FMOD_SOUND *)this, name, index, tag); }
-FMOD_RESULT F_API FMOD::Sound::getOpenState		   (FMOD_OPENSTATE *openstate, unsigned int *percentbuffered, bool *starving, bool *diskbusy) { return FMOD_Sound_GetOpenState((FMOD_SOUND *)this, openstate, percentbuffered, (FMOD_BOOL *)starving, (FMOD_BOOL *)diskbusy); }
+FMOD_RESULT F_API FMOD::Sound::getOpenState		   (FMOD_OPENSTATE *openstate, unsigned int *percentbuffered, bool *starving, bool *diskbusy) { int r[2]; FMOD_RESULT res = FMOD_Sound_GetOpenState((FMOD_SOUND *)this, openstate, percentbuffered, (FMOD_BOOL *)&r[0], (FMOD_BOOL *)&r[1]); set_if_non_null(starving, r[0]); set_if_non_null(diskbusy, r[1]); return res; }
 FMOD_RESULT F_API FMOD::Sound::readData			   (void *buffer, unsigned int length, unsigned int *read) { return FMOD_Sound_ReadData((FMOD_SOUND *)this, buffer, length, read); }
 FMOD_RESULT F_API FMOD::Sound::seekData			   (unsigned int pcm) { return FMOD_Sound_SeekData((FMOD_SOUND *)this, pcm); }
 FMOD_RESULT F_API FMOD::Sound::setSoundGroup		  (SoundGroup *soundgroup) { return FMOD_Sound_SetSoundGroup((FMOD_SOUND *)this, (FMOD_SOUNDGROUP *)soundgroup); }
@@ -1011,16 +1011,16 @@ FMOD_RESULT F_API FMOD::Sound::getUserData			(void **userdata) { return FMOD_Sou
 FMOD_RESULT F_API FMOD::ChannelControl::getSystemObject		(System **system) { return FMOD_Channel_GetSystemObject((FMOD_CHANNEL *)this, (FMOD_SYSTEM **)system); }
 FMOD_RESULT F_API FMOD::ChannelControl::stop				   () { return FMOD_Channel_Stop((FMOD_CHANNEL *)this); }
 FMOD_RESULT F_API FMOD::ChannelControl::setPaused			  (bool paused) { return FMOD_Channel_SetPaused((FMOD_CHANNEL *)this, paused); }
-FMOD_RESULT F_API FMOD::ChannelControl::getPaused			  (bool *paused) { return FMOD_Channel_GetPaused((FMOD_CHANNEL *)this, (FMOD_BOOL *)paused); }
+FMOD_RESULT F_API FMOD::ChannelControl::getPaused			  (bool *paused) { int r; FMOD_RESULT res = FMOD_Channel_GetPaused((FMOD_CHANNEL *)this, (FMOD_BOOL *)&r); *(uint8_t *)paused = r; return res; }
 FMOD_RESULT F_API FMOD::ChannelControl::setVolume			  (float volume) { return FMOD_Channel_SetVolume_sfp((FMOD_CHANNEL *)this, volume); }
 FMOD_RESULT F_API FMOD::ChannelControl::getVolume			  (float *volume) { return FMOD_Channel_GetVolume((FMOD_CHANNEL *)this, volume); }
 FMOD_RESULT F_API FMOD::ChannelControl::setVolumeRamp		  (bool ramp) { return FMOD_Channel_SetVolumeRamp((FMOD_CHANNEL *)this, ramp); }
-FMOD_RESULT F_API FMOD::ChannelControl::getVolumeRamp		  (bool *ramp) { return FMOD_Channel_GetVolumeRamp((FMOD_CHANNEL *)this, (FMOD_BOOL *)ramp); }
+FMOD_RESULT F_API FMOD::ChannelControl::getVolumeRamp		  (bool *ramp) { int r; FMOD_RESULT res = FMOD_Channel_GetVolumeRamp((FMOD_CHANNEL *)this, (FMOD_BOOL *)&r); *(uint8_t *)ramp = r; return res; }
 FMOD_RESULT F_API FMOD::ChannelControl::getAudibility		  (float *audibility) { return FMOD_Channel_GetAudibility((FMOD_CHANNEL *)this, audibility); }
 FMOD_RESULT F_API FMOD::ChannelControl::setPitch			   (float pitch) { return FMOD_Channel_SetPitch_sfp((FMOD_CHANNEL *)this, pitch); }
 FMOD_RESULT F_API FMOD::ChannelControl::getPitch			   (float *pitch) { return FMOD_Channel_GetPitch((FMOD_CHANNEL *)this, pitch); }
 FMOD_RESULT F_API FMOD::ChannelControl::setMute				(bool mute) { return FMOD_Channel_SetMute((FMOD_CHANNEL *)this, mute); }
-FMOD_RESULT F_API FMOD::ChannelControl::getMute				(bool *mute) { return FMOD_Channel_GetMute((FMOD_CHANNEL *)this, (FMOD_BOOL *)mute); }
+FMOD_RESULT F_API FMOD::ChannelControl::getMute				(bool *mute) { int r; FMOD_RESULT res = FMOD_Channel_GetMute((FMOD_CHANNEL *)this, (FMOD_BOOL *)&r); *(uint8_t *)mute = r; return res; }
 FMOD_RESULT F_API FMOD::ChannelControl::setReverbProperties	(int instance, float wet) { return FMOD_Channel_SetReverbProperties_sfp((FMOD_CHANNEL *)this, instance, wet); }
 FMOD_RESULT F_API FMOD::ChannelControl::getReverbProperties	(int instance, float *wet) { return FMOD_Channel_GetReverbProperties((FMOD_CHANNEL *)this, instance, wet); }
 FMOD_RESULT F_API FMOD::ChannelControl::setLowPassGain		 (float gain) { return FMOD_Channel_SetLowPassGain_sfp((FMOD_CHANNEL *)this, gain); }
@@ -1036,7 +1036,7 @@ FMOD_RESULT F_API FMOD::ChannelControl::setMixMatrix		   (float *matrix, int out
 FMOD_RESULT F_API FMOD::ChannelControl::getMixMatrix		   (float *matrix, int *outchannels, int *inchannels, int inchannel_hop ) { return FMOD_Channel_GetMixMatrix((FMOD_CHANNEL *)this, matrix, outchannels, inchannels, inchannel_hop); }
 FMOD_RESULT F_API FMOD::ChannelControl::getDSPClock			(unsigned long long *dspclock, unsigned long long *parentclock) { return FMOD_Channel_GetDSPClock((FMOD_CHANNEL *)this, dspclock, parentclock); }
 FMOD_RESULT F_API FMOD::ChannelControl::setDelay			   (unsigned long long dspclock_start, unsigned long long dspclock_end, bool stopchannels ) { return FMOD_Channel_SetDelay((FMOD_CHANNEL *)this, dspclock_start, dspclock_end, stopchannels); }
-FMOD_RESULT F_API FMOD::ChannelControl::getDelay			   (unsigned long long *dspclock_start, unsigned long long *dspclock_end, bool *stopchannels ) { return FMOD_Channel_GetDelay((FMOD_CHANNEL *)this, dspclock_start, dspclock_end, (FMOD_BOOL *)stopchannels); }
+FMOD_RESULT F_API FMOD::ChannelControl::getDelay			   (unsigned long long *dspclock_start, unsigned long long *dspclock_end, bool *stopchannels ) { int r; FMOD_RESULT res = FMOD_Channel_GetDelay((FMOD_CHANNEL *)this, dspclock_start, dspclock_end, (FMOD_BOOL *)&r); set_if_non_null(stopchannels,r); return res; }
 FMOD_RESULT F_API FMOD::ChannelControl::addFadePoint		   (unsigned long long dspclock, float volume) { return FMOD_Channel_AddFadePoint_sfp((FMOD_CHANNEL *)this, dspclock, volume); }
 FMOD_RESULT F_API FMOD::ChannelControl::setFadePointRamp	   (unsigned long long dspclock, float volume) { return FMOD_Channel_SetFadePointRamp_sfp((FMOD_CHANNEL *)this, dspclock, volume); }
 FMOD_RESULT F_API FMOD::ChannelControl::removeFadePoints	   (unsigned long long dspclock_start, unsigned long long dspclock_end) { return FMOD_Channel_RemoveFadePoints((FMOD_CHANNEL *)this, dspclock_start, dspclock_end); }
@@ -1066,7 +1066,7 @@ FMOD_RESULT F_API FMOD::ChannelControl::get3DLevel			 (float *level) { return FM
 FMOD_RESULT F_API FMOD::ChannelControl::set3DDopplerLevel	  (float level) { return FMOD_Channel_Set3DDopplerLevel_sfp((FMOD_CHANNEL *)this, level); }
 FMOD_RESULT F_API FMOD::ChannelControl::get3DDopplerLevel	  (float *level) { return FMOD_Channel_Get3DDopplerLevel((FMOD_CHANNEL *)this, level); }
 FMOD_RESULT F_API FMOD::ChannelControl::set3DDistanceFilter	(bool custom, float customLevel, float centerFreq) { return FMOD_Channel_Set3DDistanceFilter_sfp((FMOD_CHANNEL *)this, custom, customLevel, centerFreq); }
-FMOD_RESULT F_API FMOD::ChannelControl::get3DDistanceFilter	(bool *custom, float *customLevel, float *centerFreq) { return FMOD_Channel_Get3DDistanceFilter((FMOD_CHANNEL *)this, (FMOD_BOOL *)custom, customLevel, centerFreq); }
+FMOD_RESULT F_API FMOD::ChannelControl::get3DDistanceFilter	(bool *custom, float *customLevel, float *centerFreq) { int r; FMOD_RESULT res = FMOD_Channel_Get3DDistanceFilter((FMOD_CHANNEL *)this, (FMOD_BOOL *)&r, customLevel, centerFreq); *(uint8_t *)custom = r; return res; }
 FMOD_RESULT F_API FMOD::ChannelControl::setUserData			(void *userdata) { return FMOD_Channel_SetUserData((FMOD_CHANNEL *)this, userdata); }
 FMOD_RESULT F_API FMOD::ChannelControl::getUserData			(void **userdata) { return FMOD_Channel_GetUserData((FMOD_CHANNEL *)this, userdata); }
 FMOD_RESULT F_API FMOD::Channel::setFrequency		   (float frequency) { return FMOD_Channel_SetFrequency_sfp((FMOD_CHANNEL *)this, frequency); }
@@ -1081,7 +1081,7 @@ FMOD_RESULT F_API FMOD::Channel::setLoopCount		   (int loopcount) { return FMOD_
 FMOD_RESULT F_API FMOD::Channel::getLoopCount		   (int *loopcount) { return FMOD_Channel_GetLoopCount((FMOD_CHANNEL *)this, loopcount); }
 FMOD_RESULT F_API FMOD::Channel::setLoopPoints		  (unsigned int loopstart, FMOD_TIMEUNIT loopstarttype, unsigned int loopend, FMOD_TIMEUNIT loopendtype) { return FMOD_Channel_SetLoopPoints((FMOD_CHANNEL *)this, loopstart, loopstarttype, loopend, loopendtype); }
 FMOD_RESULT F_API FMOD::Channel::getLoopPoints		  (unsigned int *loopstart, FMOD_TIMEUNIT loopstarttype, unsigned int *loopend, FMOD_TIMEUNIT loopendtype) { return FMOD_Channel_GetLoopPoints((FMOD_CHANNEL *)this, loopstart, loopstarttype, loopend, loopendtype); }
-FMOD_RESULT F_API FMOD::Channel::isVirtual			  (bool *isvirtual) { return FMOD_Channel_IsVirtual((FMOD_CHANNEL *)this, (FMOD_BOOL *)isvirtual); }
+FMOD_RESULT F_API FMOD::Channel::isVirtual			  (bool *isvirtual) { int r; FMOD_RESULT res = FMOD_Channel_IsVirtual((FMOD_CHANNEL *)this, (FMOD_BOOL *)&r); *(uint8_t *)isvirtual = r; return res; }
 FMOD_RESULT F_API FMOD::Channel::getCurrentSound		(Sound **sound) { return FMOD_Channel_GetCurrentSound((FMOD_CHANNEL *)this, (FMOD_SOUND **)sound); }
 FMOD_RESULT F_API FMOD::Channel::getIndex			   (int *index) { return FMOD_Channel_GetIndex((FMOD_CHANNEL *)this, index); }
 FMOD_RESULT F_API FMOD::ChannelGroup::release				 () { return FMOD_ChannelGroup_Release((FMOD_CHANNELGROUP *)this); }
@@ -1119,9 +1119,9 @@ FMOD_RESULT F_API FMOD::DSP::getNumOutputs		  (int *numoutputs) { return FMOD_DS
 FMOD_RESULT F_API FMOD::DSP::getInput			   (int index, DSP **input, DSPConnection **inputconnection) { return FMOD_DSP_GetInput((FMOD_DSP *)this, index, (FMOD_DSP **)input, (FMOD_DSPCONNECTION **)inputconnection); }
 FMOD_RESULT F_API FMOD::DSP::getOutput			  (int index, DSP **output, DSPConnection **outputconnection) { return FMOD_DSP_GetOutput((FMOD_DSP *)this, index, (FMOD_DSP **)output, (FMOD_DSPCONNECTION **)outputconnection); }
 FMOD_RESULT F_API FMOD::DSP::setActive			  (bool active) { return FMOD_DSP_SetActive((FMOD_DSP *)this, active); }
-FMOD_RESULT F_API FMOD::DSP::getActive			  (bool *active) { return FMOD_DSP_GetActive((FMOD_DSP *)this, (FMOD_BOOL *)active); }
+FMOD_RESULT F_API FMOD::DSP::getActive			  (bool *active) { int r; FMOD_RESULT res = FMOD_DSP_GetActive((FMOD_DSP *)this, (FMOD_BOOL *)&r); *(uint8_t *)active = r; return res; }
 FMOD_RESULT F_API FMOD::DSP::setBypass			  (bool bypass) { return FMOD_DSP_SetBypass((FMOD_DSP *)this, bypass); }
-FMOD_RESULT F_API FMOD::DSP::getBypass			  (bool *bypass) { return FMOD_DSP_GetBypass((FMOD_DSP *)this, (FMOD_BOOL *)bypass); }
+FMOD_RESULT F_API FMOD::DSP::getBypass			  (bool *bypass) { int r; FMOD_RESULT res = FMOD_DSP_GetBypass((FMOD_DSP *)this, (FMOD_BOOL *)&r); *(uint8_t *)bypass = r; return res; }
 FMOD_RESULT F_API FMOD::DSP::setWetDryMix		   (float prewet, float postwet, float dry) { return FMOD_DSP_SetWetDryMix_sfp((FMOD_DSP *)this, prewet, postwet, dry); }
 FMOD_RESULT F_API FMOD::DSP::getWetDryMix		   (float *prewet, float *postwet, float *dry) { return FMOD_DSP_GetWetDryMix((FMOD_DSP *)this, prewet, postwet, dry); }
 FMOD_RESULT F_API FMOD::DSP::setChannelFormat	   (FMOD_CHANNELMASK channelmask, int numchannels, FMOD_SPEAKERMODE source_speakermode) { return FMOD_DSP_SetChannelFormat((FMOD_DSP *)this, channelmask, numchannels, source_speakermode); }
@@ -1134,7 +1134,7 @@ FMOD_RESULT F_API FMOD::DSP::setParameterBool	   (int index, bool value) { retur
 FMOD_RESULT F_API FMOD::DSP::setParameterData	   (int index, void *data, unsigned int length) { return FMOD_DSP_SetParameterData((FMOD_DSP *)this, index, data, length); }
 FMOD_RESULT F_API FMOD::DSP::getParameterFloat	  (int index, float *value, char *valuestr, int valuestrlen) { return FMOD_DSP_GetParameterFloat((FMOD_DSP *)this, index, value, valuestr, valuestrlen); }
 FMOD_RESULT F_API FMOD::DSP::getParameterInt		(int index, int *value, char *valuestr, int valuestrlen) { return FMOD_DSP_GetParameterInt((FMOD_DSP *)this, index, value, valuestr, valuestrlen); }
-FMOD_RESULT F_API FMOD::DSP::getParameterBool	   (int index, bool *value, char *valuestr, int valuestrlen) { return FMOD_DSP_GetParameterBool((FMOD_DSP *)this, index, (FMOD_BOOL *)value, valuestr, valuestrlen); }
+FMOD_RESULT F_API FMOD::DSP::getParameterBool	   (int index, bool *value, char *valuestr, int valuestrlen) { int r; FMOD_RESULT res = FMOD_DSP_GetParameterBool((FMOD_DSP *)this, index, (FMOD_BOOL *)&r, valuestr, valuestrlen); *(uint8_t *)value = r; return res; }
 FMOD_RESULT F_API FMOD::DSP::getParameterData	   (int index, void **data, unsigned int *length, char *valuestr, int valuestrlen) { return FMOD_DSP_GetParameterData((FMOD_DSP *)this, index, data, length, valuestr, valuestrlen); }
 FMOD_RESULT F_API FMOD::DSP::getNumParameters	   (int *numparams) { return FMOD_DSP_GetNumParameters((FMOD_DSP *)this, numparams); }
 FMOD_RESULT F_API FMOD::DSP::getParameterInfo	   (int index, FMOD_DSP_PARAMETER_DESC **desc) { return FMOD_DSP_GetParameterInfo((FMOD_DSP *)this, index, desc); }
@@ -1142,11 +1142,11 @@ FMOD_RESULT F_API FMOD::DSP::getDataParameterIndex  (int datatype, int *index) {
 FMOD_RESULT F_API FMOD::DSP::showConfigDialog	   (void *hwnd, bool show) { return FMOD_DSP_ShowConfigDialog((FMOD_DSP *)this, hwnd, show); }
 FMOD_RESULT F_API FMOD::DSP::getInfo				(char *name, unsigned int *version, int *channels, int *configwidth, int *configheight) { return FMOD_DSP_GetInfo((FMOD_DSP *)this, name, version, channels, configwidth, configheight); }
 FMOD_RESULT F_API FMOD::DSP::getType				(FMOD_DSP_TYPE *type) { return FMOD_DSP_GetType((FMOD_DSP *)this, type); }
-FMOD_RESULT F_API FMOD::DSP::getIdle				(bool *idle) { return FMOD_DSP_GetIdle((FMOD_DSP *)this, (FMOD_BOOL *)idle); }
+FMOD_RESULT F_API FMOD::DSP::getIdle				(bool *idle) { int r; FMOD_RESULT res = FMOD_DSP_GetIdle((FMOD_DSP *)this, (FMOD_BOOL *)&r); *(uint8_t *)idle = r; return res; }
 FMOD_RESULT F_API FMOD::DSP::setUserData			(void *userdata) { return FMOD_DSP_SetUserData((FMOD_DSP *)this, userdata); }
 FMOD_RESULT F_API FMOD::DSP::getUserData			(void **userdata) { return FMOD_DSP_GetUserData((FMOD_DSP *)this, userdata); }
 FMOD_RESULT F_API FMOD::DSP::setMeteringEnabled	 (bool inputEnabled, bool outputEnabled) { return FMOD_DSP_SetMeteringEnabled((FMOD_DSP *)this, inputEnabled, outputEnabled); }
-FMOD_RESULT F_API FMOD::DSP::getMeteringEnabled	 (bool *inputEnabled, bool *outputEnabled) { return FMOD_DSP_GetMeteringEnabled((FMOD_DSP *)this, (FMOD_BOOL *)inputEnabled, (FMOD_BOOL *)outputEnabled); }
+FMOD_RESULT F_API FMOD::DSP::getMeteringEnabled	 (bool *inputEnabled, bool *outputEnabled) { int r[2]; FMOD_RESULT res = FMOD_DSP_GetMeteringEnabled((FMOD_DSP *)this, (FMOD_BOOL *)&r[0], (FMOD_BOOL *)&r[1]); *(uint8_t *)inputEnabled = r[0]; *(uint8_t *)outputEnabled = r[1]; return res; }
 FMOD_RESULT F_API FMOD::DSP::getMeteringInfo		(FMOD_DSP_METERING_INFO *inputInfo, FMOD_DSP_METERING_INFO *outputInfo) { return FMOD_DSP_GetMeteringInfo((FMOD_DSP *)this, inputInfo, outputInfo); }
 FMOD_RESULT F_API FMOD::DSPConnection::getInput			  (DSP **input) { return FMOD_DSPConnection_GetInput((FMOD_DSPCONNECTION *)this, (FMOD_DSP **)input); }
 FMOD_RESULT F_API FMOD::DSPConnection::getOutput			 (DSP **output) { return FMOD_DSPConnection_GetOutput((FMOD_DSPCONNECTION *)this, (FMOD_DSP **)output); }
@@ -1165,9 +1165,9 @@ FMOD_RESULT F_API FMOD::Geometry::getPolygonNumVertices  (int index, int *numver
 FMOD_RESULT F_API FMOD::Geometry::setPolygonVertex	   (int index, int vertexindex, const FMOD_VECTOR *vertex) { return FMOD_Geometry_SetPolygonVertex((FMOD_GEOMETRY *)this, index, vertexindex, vertex); }
 FMOD_RESULT F_API FMOD::Geometry::getPolygonVertex	   (int index, int vertexindex, FMOD_VECTOR *vertex) { return FMOD_Geometry_GetPolygonVertex((FMOD_GEOMETRY *)this, index, vertexindex, vertex); }
 FMOD_RESULT F_API FMOD::Geometry::setPolygonAttributes   (int index, float directocclusion, float reverbocclusion, bool doublesided) { return FMOD_Geometry_SetPolygonAttributes((FMOD_GEOMETRY *)this, index, directocclusion, reverbocclusion, doublesided); }
-FMOD_RESULT F_API FMOD::Geometry::getPolygonAttributes   (int index, float *directocclusion, float *reverbocclusion, bool *doublesided) { return FMOD_Geometry_GetPolygonAttributes((FMOD_GEOMETRY *)this, index, directocclusion, reverbocclusion, (FMOD_BOOL *)doublesided); }
+FMOD_RESULT F_API FMOD::Geometry::getPolygonAttributes   (int index, float *directocclusion, float *reverbocclusion, bool *doublesided) { int r; FMOD_RESULT res = FMOD_Geometry_GetPolygonAttributes((FMOD_GEOMETRY *)this, index, directocclusion, reverbocclusion, (FMOD_BOOL *)&r); *(uint8_t *)doublesided = r; return res; }
 FMOD_RESULT F_API FMOD::Geometry::setActive			  (bool active) { return FMOD_Geometry_SetActive((FMOD_GEOMETRY *)this, active); }
-FMOD_RESULT F_API FMOD::Geometry::getActive			  (bool *active) { return FMOD_Geometry_GetActive((FMOD_GEOMETRY *)this, (FMOD_BOOL *)active); }
+FMOD_RESULT F_API FMOD::Geometry::getActive			  (bool *active) { int r; FMOD_RESULT res = FMOD_Geometry_GetActive((FMOD_GEOMETRY *)this, (FMOD_BOOL *)&r); *(uint8_t *)active = r; return res; }
 FMOD_RESULT F_API FMOD::Geometry::setRotation			(const FMOD_VECTOR *forward, const FMOD_VECTOR *up) { return FMOD_Geometry_SetRotation((FMOD_GEOMETRY *)this, forward, up); }
 FMOD_RESULT F_API FMOD::Geometry::getRotation			(FMOD_VECTOR *forward, FMOD_VECTOR *up) { return FMOD_Geometry_GetRotation((FMOD_GEOMETRY *)this, forward, up); }
 FMOD_RESULT F_API FMOD::Geometry::setPosition			(const FMOD_VECTOR *position) { return FMOD_Geometry_SetPosition((FMOD_GEOMETRY *)this, position); }
@@ -1183,7 +1183,7 @@ FMOD_RESULT F_API FMOD::Reverb3D::get3DAttributes		(FMOD_VECTOR *position, float
 FMOD_RESULT F_API FMOD::Reverb3D::setProperties		  (const FMOD_REVERB_PROPERTIES *properties) { return FMOD_Reverb3D_SetProperties((FMOD_REVERB3D *)this, properties); }
 FMOD_RESULT F_API FMOD::Reverb3D::getProperties		  (FMOD_REVERB_PROPERTIES *properties) { return FMOD_Reverb3D_GetProperties((FMOD_REVERB3D *)this, properties); }
 FMOD_RESULT F_API FMOD::Reverb3D::setActive			  (bool active) { return FMOD_Reverb3D_SetActive((FMOD_REVERB3D *)this, active); }
-FMOD_RESULT F_API FMOD::Reverb3D::getActive			  (bool *active) { return FMOD_Reverb3D_GetActive((FMOD_REVERB3D *)this, (FMOD_BOOL *)active); }
+FMOD_RESULT F_API FMOD::Reverb3D::getActive			  (bool *active) { int r; FMOD_RESULT res = FMOD_Reverb3D_GetActive((FMOD_REVERB3D *)this, (FMOD_BOOL *)&r); *(uint8_t *)active = r; return res; }
 FMOD_RESULT F_API FMOD::Reverb3D::setUserData			(void *userdata) { return FMOD_Reverb3D_SetUserData((FMOD_REVERB3D *)this, userdata); }
 FMOD_RESULT F_API FMOD::Reverb3D::getUserData			(void **userdata) { return FMOD_Reverb3D_GetUserData((FMOD_REVERB3D *)this, userdata); }
 
@@ -1540,7 +1540,7 @@ FMOD_RESULT F_API FMOD::Studio::CommandReplay::start()  { return FMOD_Studio_Com
 FMOD_RESULT F_API FMOD::Studio::CommandReplay::stop()  { return FMOD_Studio_CommandReplay_Stop((FMOD_STUDIO_COMMANDREPLAY *)this); }
 FMOD_RESULT F_API FMOD::Studio::CommandReplay::seekToTime(float time)  { return FMOD_Studio_CommandReplay_SeekToTime_sfp((FMOD_STUDIO_COMMANDREPLAY *)this,time); }
 FMOD_RESULT F_API FMOD::Studio::CommandReplay::seekToCommand(int commandindex)  { return FMOD_Studio_CommandReplay_SeekToCommand((FMOD_STUDIO_COMMANDREPLAY *)this,commandindex); }
-FMOD_RESULT F_API FMOD::Studio::CommandReplay::getPaused(bool *paused) { return FMOD_Studio_CommandReplay_GetPaused((FMOD_STUDIO_COMMANDREPLAY *)this,(int *)paused); }
+FMOD_RESULT F_API FMOD::Studio::CommandReplay::getPaused(bool *paused) { int r; FMOD_RESULT res = FMOD_Studio_CommandReplay_GetPaused((FMOD_STUDIO_COMMANDREPLAY *)this,(int *)&r); *(uint8_t *)paused = r; return res; }
 FMOD_RESULT F_API FMOD::Studio::CommandReplay::setPaused(bool paused)  { return FMOD_Studio_CommandReplay_SetPaused((FMOD_STUDIO_COMMANDREPLAY *)this,paused); }
 FMOD_RESULT F_API FMOD::Studio::CommandReplay::getPlaybackState(FMOD_STUDIO_PLAYBACK_STATE *state) { return FMOD_Studio_CommandReplay_GetPlaybackState((FMOD_STUDIO_COMMANDREPLAY *)this,state); }
 FMOD_RESULT F_API FMOD::Studio::CommandReplay::getCurrentCommand(int *commandindex, float *currenttime) { return FMOD_Studio_CommandReplay_GetCurrentCommand((FMOD_STUDIO_COMMANDREPLAY *)this,commandindex,currenttime); }
@@ -1607,11 +1607,11 @@ FMOD_RESULT F_API FMOD::Studio::EventDescription::getLength(int *length) { retur
 FMOD_RESULT F_API FMOD::Studio::EventDescription::getMinimumDistance(float *distance) { return FMOD_Studio_EventDescription_GetMinimumDistance((FMOD_STUDIO_EVENTDESCRIPTION *)this,distance); }
 FMOD_RESULT F_API FMOD::Studio::EventDescription::getMaximumDistance(float *distance) { return FMOD_Studio_EventDescription_GetMaximumDistance((FMOD_STUDIO_EVENTDESCRIPTION *)this,distance); }
 FMOD_RESULT F_API FMOD::Studio::EventDescription::getSoundSize(float *size) { return FMOD_Studio_EventDescription_GetSoundSize((FMOD_STUDIO_EVENTDESCRIPTION *)this,size); }
-FMOD_RESULT F_API FMOD::Studio::EventDescription::isSnapshot(bool *snapshot) { return FMOD_Studio_EventDescription_IsSnapshot((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)snapshot); }
-FMOD_RESULT F_API FMOD::Studio::EventDescription::isOneshot(bool *oneshot) { return FMOD_Studio_EventDescription_IsOneshot((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)oneshot); }
-FMOD_RESULT F_API FMOD::Studio::EventDescription::isStream(bool *isStream) { return FMOD_Studio_EventDescription_IsStream((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)isStream); }
-FMOD_RESULT F_API FMOD::Studio::EventDescription::is3D(bool *is3D) { return FMOD_Studio_EventDescription_Is3D((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)is3D); }
-FMOD_RESULT F_API FMOD::Studio::EventDescription::hasCue(bool *cue) { return FMOD_Studio_EventDescription_HasCue((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)cue); }
+FMOD_RESULT F_API FMOD::Studio::EventDescription::isSnapshot(bool *snapshot) { int r; FMOD_RESULT res = FMOD_Studio_EventDescription_IsSnapshot((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)&r); *(uint8_t *)snapshot = r; return res; }
+FMOD_RESULT F_API FMOD::Studio::EventDescription::isOneshot(bool *oneshot) { int r; FMOD_RESULT res = FMOD_Studio_EventDescription_IsOneshot((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)&r); *(uint8_t *)oneshot = r; return res; }
+FMOD_RESULT F_API FMOD::Studio::EventDescription::isStream(bool *isStream) { int r; FMOD_RESULT res = FMOD_Studio_EventDescription_IsStream((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)&r); *(uint8_t *)isStream = r; return res; }
+FMOD_RESULT F_API FMOD::Studio::EventDescription::is3D(bool *is3D) { int r; FMOD_RESULT res = FMOD_Studio_EventDescription_Is3D((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)&r); *(uint8_t *)is3D = r; return res; }
+FMOD_RESULT F_API FMOD::Studio::EventDescription::hasCue(bool *cue) { int r; FMOD_RESULT res = FMOD_Studio_EventDescription_HasCue((FMOD_STUDIO_EVENTDESCRIPTION *)this,(int *)&r); *(uint8_t *)cue = r; return res; }
 FMOD_RESULT F_API FMOD::Studio::EventDescription::createInstance(EventInstance **instance) { return FMOD_Studio_EventDescription_CreateInstance((FMOD_STUDIO_EVENTDESCRIPTION *)this,(FMOD_STUDIO_EVENTINSTANCE **)instance); }
 FMOD_RESULT F_API FMOD::Studio::EventDescription::getInstanceCount(int *count) { return FMOD_Studio_EventDescription_GetInstanceCount((FMOD_STUDIO_EVENTDESCRIPTION *)this,count); }
 FMOD_RESULT F_API FMOD::Studio::EventDescription::getInstanceList(EventInstance **array, int capacity, int *count) { return FMOD_Studio_EventDescription_GetInstanceList((FMOD_STUDIO_EVENTDESCRIPTION *)this,(FMOD_STUDIO_EVENTINSTANCE **)array,capacity,count); }
@@ -1636,7 +1636,7 @@ FMOD_RESULT F_API FMOD::Studio::EventInstance::getProperty(FMOD_STUDIO_EVENT_PRO
 FMOD_RESULT F_API FMOD::Studio::EventInstance::setProperty(FMOD_STUDIO_EVENT_PROPERTY index, float value)  { return FMOD_Studio_EventInstance_SetProperty_sfp((FMOD_STUDIO_EVENTINSTANCE *)this,index,value); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::getReverbLevel(int index, float *level) { return FMOD_Studio_EventInstance_GetReverbLevel((FMOD_STUDIO_EVENTINSTANCE *)this,index,level); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::setReverbLevel(int index, float level)  { return FMOD_Studio_EventInstance_SetReverbLevel_sfp((FMOD_STUDIO_EVENTINSTANCE *)this,index,level); }
-FMOD_RESULT F_API FMOD::Studio::EventInstance::getPaused(bool *paused) { return FMOD_Studio_EventInstance_GetPaused((FMOD_STUDIO_EVENTINSTANCE *)this,(int *)paused); }
+FMOD_RESULT F_API FMOD::Studio::EventInstance::getPaused(bool *paused) { int r; FMOD_RESULT res = FMOD_Studio_EventInstance_GetPaused((FMOD_STUDIO_EVENTINSTANCE *)this,(int *)&r); *(uint8_t *)paused = r; return res; }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::setPaused(bool paused)  { return FMOD_Studio_EventInstance_SetPaused((FMOD_STUDIO_EVENTINSTANCE *)this,paused); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::start()  { return FMOD_Studio_EventInstance_Start((FMOD_STUDIO_EVENTINSTANCE *)this); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::stop(FMOD_STUDIO_STOP_MODE mode)  { return FMOD_Studio_EventInstance_Stop((FMOD_STUDIO_EVENTINSTANCE *)this,mode); }
@@ -1645,7 +1645,7 @@ FMOD_RESULT F_API FMOD::Studio::EventInstance::setTimelinePosition(int position)
 FMOD_RESULT F_API FMOD::Studio::EventInstance::getPlaybackState(FMOD_STUDIO_PLAYBACK_STATE *state) { return FMOD_Studio_EventInstance_GetPlaybackState((FMOD_STUDIO_EVENTINSTANCE *)this,state); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::getChannelGroup(ChannelGroup **group) { return FMOD_Studio_EventInstance_GetChannelGroup((FMOD_STUDIO_EVENTINSTANCE *)this,(FMOD_CHANNELGROUP **)group); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::release()  { return FMOD_Studio_EventInstance_Release((FMOD_STUDIO_EVENTINSTANCE *)this); }
-FMOD_RESULT F_API FMOD::Studio::EventInstance::isVirtual(bool *virtualState) { return FMOD_Studio_EventInstance_IsVirtual((FMOD_STUDIO_EVENTINSTANCE *)this,(int *)virtualState); }
+FMOD_RESULT F_API FMOD::Studio::EventInstance::isVirtual(bool *virtualState) { int r; FMOD_RESULT res = FMOD_Studio_EventInstance_IsVirtual((FMOD_STUDIO_EVENTINSTANCE *)this,(int *)&r); *(uint8_t *)virtualState = r; return res; }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::getParameterValue(const char *name, float *value, float *finalvalue)  { return FMOD_Studio_EventInstance_GetParameterValue((FMOD_STUDIO_EVENTINSTANCE *)this,name,value,finalvalue); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::setParameterValue(const char *name, float value)  { return FMOD_Studio_EventInstance_SetParameterValue_sfp((FMOD_STUDIO_EVENTINSTANCE *)this,name,value); }
 FMOD_RESULT F_API FMOD::Studio::EventInstance::getParameterValueByIndex(int index, float *value, float *finalvalue)  { return FMOD_Studio_EventInstance_GetParameterValueByIndex((FMOD_STUDIO_EVENTINSTANCE *)this,index,value,finalvalue); }
@@ -1667,9 +1667,9 @@ FMOD_RESULT F_API FMOD::Studio::Bus::getID(FMOD_GUID *id) { return FMOD_Studio_B
 FMOD_RESULT F_API FMOD::Studio::Bus::getPath(char *path, int size, int *retrieved) { return FMOD_Studio_Bus_GetPath((FMOD_STUDIO_BUS *)this,path,size,retrieved); }
 FMOD_RESULT F_API FMOD::Studio::Bus::getVolume(float *volume, float *finalvolume) { return FMOD_Studio_Bus_GetVolume((FMOD_STUDIO_BUS *)this,volume,finalvolume); }
 FMOD_RESULT F_API FMOD::Studio::Bus::setVolume(float volume)  { return FMOD_Studio_Bus_SetVolume_sfp((FMOD_STUDIO_BUS *)this,volume); }
-FMOD_RESULT F_API FMOD::Studio::Bus::getPaused(bool *paused) { return FMOD_Studio_Bus_GetPaused((FMOD_STUDIO_BUS *)this,(int *)paused); }
+FMOD_RESULT F_API FMOD::Studio::Bus::getPaused(bool *paused) { int r; FMOD_RESULT res = FMOD_Studio_Bus_GetPaused((FMOD_STUDIO_BUS *)this,(int *)&r); *(uint8_t *)paused = r; return res; }
 FMOD_RESULT F_API FMOD::Studio::Bus::setPaused(bool paused)  { return FMOD_Studio_Bus_SetPaused((FMOD_STUDIO_BUS *)this,paused); }
-FMOD_RESULT F_API FMOD::Studio::Bus::getMute(bool *mute) { return FMOD_Studio_Bus_GetMute((FMOD_STUDIO_BUS *)this,(int *)mute); }
+FMOD_RESULT F_API FMOD::Studio::Bus::getMute(bool *mute) { int r; FMOD_RESULT res = FMOD_Studio_Bus_GetMute((FMOD_STUDIO_BUS *)this,(int *)&r); *(uint8_t *)mute = r; return res; }
 FMOD_RESULT F_API FMOD::Studio::Bus::setMute(bool mute)  { return FMOD_Studio_Bus_SetMute((FMOD_STUDIO_BUS *)this,mute); }
 FMOD_RESULT F_API FMOD::Studio::Bus::stopAllEvents(FMOD_STUDIO_STOP_MODE mode)  { return FMOD_Studio_Bus_StopAllEvents((FMOD_STUDIO_BUS *)this,mode); }
 FMOD_RESULT F_API FMOD::Studio::Bus::lockChannelGroup()  { return FMOD_Studio_Bus_LockChannelGroup((FMOD_STUDIO_BUS *)this); }
